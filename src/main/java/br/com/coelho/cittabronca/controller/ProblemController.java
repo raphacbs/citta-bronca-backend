@@ -29,8 +29,8 @@ public class ProblemController {
         return problemService.create(problemDTO);
     }
 
-    @GetMapping
-    public ProblemDTO findById(@RequestParam("id") UUID id) {
+    @GetMapping("/{id:^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$}")
+    public ProblemDTO findById(@PathVariable("id") UUID id) {
         return this.problemService.findById(id);
     }
 }
