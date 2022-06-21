@@ -1,12 +1,13 @@
 package br.com.coelho.cittabronca.service;
 
-import br.com.coelho.cittabronca.dto.ProblemDTO;
 import br.com.coelho.cittabronca.entity.Problem;
+import br.com.coelho.cittabronca.enums.ProblemStatusEnum;
 import br.com.coelho.cittabronca.mapper.ProblemMapper;
 import br.com.coelho.cittabronca.repository.ProblemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,18 +21,14 @@ public class ProblemService {
         this.problemRepository = problemRepository;
     }
 
-    public ProblemDTO create(ProblemDTO problemDTO) {
-        Problem problemToSave = problemMapper.toModel(problemDTO);
+    public Problem create(Problem problemToSave) {
+        problemToSave.setStatus(ProblemStatusEnum.OPEN);
+        problemToSave.setCreateAt(LocalDateTime.now());
         Problem problemSaved = this.problemRepository.save(problemToSave);
-        return problemMapper.toDTO(problemSaved);
+        return problemSaved;
     }
 
-    public ProblemDTO findById(UUID id) {
-        Optional<Problem> optionalProblem = this.problemRepository.findById(id);
-        return this.problemMapper.toDTO(optionalProblem.orElse(null));
-    }
-
-    public ProblemDTO findByNeighborhood(Optional<String> neighborhood) {
-        return null;
+    public Optional<Problem> findById(UUID id) {
+        return this.problemRepository.findById(id);
     }
 }

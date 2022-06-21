@@ -3,17 +3,17 @@ package br.com.coelho.cittabronca.service;
 import br.com.coelho.cittabronca.dto.AttachmentDTO;
 import br.com.coelho.cittabronca.dto.ProblemDTO;
 import br.com.coelho.cittabronca.entity.Attachment;
+import br.com.coelho.cittabronca.entity.Problem;
 import br.com.coelho.cittabronca.mapper.AttachmentMapper;
 import br.com.coelho.cittabronca.mapper.ProblemMapper;
 import br.com.coelho.cittabronca.repository.AttachmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.MalformedURLException;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.Optional;
 
 @Service
 public class AttachmentService {
@@ -32,8 +32,8 @@ public class AttachmentService {
         this.storageService = storageService;
     }
 
-    public AttachmentDTO save(MultipartFile file, UUID probremId) throws Exception {
-        ProblemDTO problemDTO = problemService.findById(probremId);
+    public AttachmentDTO save(MultipartFile file, Problem probrem) throws Exception {
+        ProblemDTO problemDTO = problemMapper.toDTO(probrem);
         AttachmentDTO attachmentDTO = AttachmentDTO.builder()
                 .size(file.getSize())
                 .createAt(LocalDateTime.now())
@@ -47,16 +47,15 @@ public class AttachmentService {
         return attachmentDTO;
     }
 
-    public AttachmentDTO getByProblemId(UUID probremId) throws MalformedURLException {
-        ProblemDTO problemDTO = problemService.findById(probremId);
-        Attachment attachment = attachmentRepository.getByProblem(problemMapper.toModel(problemDTO));
-        return attachmentMapper.toDTO(attachment);
+    public Optional<Attachment> getByProblemId(Problem probrem) throws MalformedURLException {
+        ProblemDTO problemDTO = problemMapper.toDTO(probrem);
+        return attachmentRepository.getByProblem(problemMapper.toModel(problemDTO));
+
     }
 
-    public Resource download(UUID probremId) throws MalformedURLException {
-        ProblemDTO problemDTO = problemService.findById(probremId);
-        Attachment attachment = attachmentRepository.getByProblem(problemMapper.toModel(problemDTO));
-        return storageService.get(attachment);
+    public Optional<Attachment> download(Problem probrem) throws MalformedURLException {
+        ProblemDTO problemDTO = problemMapper.toDTO(probrem);
+        return attachmentRepository.getByProblem(problemMapper.toModel(problemDTO));
     }
 
 }

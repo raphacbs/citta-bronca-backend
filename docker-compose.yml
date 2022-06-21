@@ -1,0 +1,38 @@
+version: '3.1'
+networks:
+  citta:
+services:
+  app:
+    container_name: cittabronca
+    image: cittabronca-app
+    build: ./
+    ports:
+      - "8080:8080"
+    depends_on:
+      - pgdb
+    networks:
+      - citta
+  pgdb:
+    image: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=cittabronca-dev
+    networks:
+      - citta
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    networks:
+      - citta
+volumes:
+  pgdata: { }

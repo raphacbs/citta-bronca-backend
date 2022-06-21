@@ -1,7 +1,12 @@
 package br.com.coelho.cittabronca.controller;
 
 import br.com.coelho.cittabronca.dto.AttachmentDTO;
+import br.com.coelho.cittabronca.entity.Attachment;
+import br.com.coelho.cittabronca.entity.Problem;
+import br.com.coelho.cittabronca.exception.ResouceNotFoundException;
 import br.com.coelho.cittabronca.service.AttachmentService;
+import br.com.coelho.cittabronca.service.ProblemService;
+import br.com.coelho.cittabronca.service.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -18,26 +23,41 @@ import java.util.UUID;
 @RequestMapping("api/v1/attachments")
 public class AttachmentController {
     private final AttachmentService attachmentService;
+    private final ProblemService problemService;
+    private final StorageService storageService;
 
     @Autowired
-    public AttachmentController(AttachmentService attachmentService) {
+    public AttachmentController(AttachmentService attachmentService, ProblemService problemService, StorageService storageService) {
         this.attachmentService = attachmentService;
+        this.problemService = problemService;
+        this.storageService = storageService;
     }
 
     @PostMapping("/upload")
-    public AttachmentDTO uploadFile(@RequestParam("file") MultipartFile file,
-                                    @RequestParam("problemId") UUID problemId) throws Exception {
-        return attachmentService.save(file, problemId);
+    public ResponseEntity<AttachmentDTO> uploadFile(@RequestParam("file") MultipartFile file,
+                                                    @RequestParam("problemId") UUID problemId) throws Exception {
+        Problem problem = this.problemService.findById(problemId).orElseThrow(
+                () -> new ResouceNotFoundException("Problem not found" + problemId));
+        return ResponseEntity.ok(attachmentService.save(file, problem));
     }
 
     @GetMapping
-    public AttachmentDTO getByProblemId(@RequestParam("problemId") UUID id) throws Exception {
-        return attachmentService.getByProblemId(id);
+    public ResponseEntity<Attachment> getByProblemId(@RequestParam("problemId") UUID problemId) throws Exception {
+        Problem problem = this.problemService.findById(problemId).orElseThrow(
+                () -> new ResouceNotFoundException("Problem not found" + problemId));
+
+        Attachment attachment = this.attachmentService.getByProblemId(problem).orElseThrow(
+                () -> new ResouceNotFoundException("attachment not found"));
+        return ResponseEntity.ok().body(attachment);
     }
 
     @GetMapping("/download")
-    public ResponseEntity<Resource> getByProblemId(@RequestParam("problemId") UUID id, HttpServletRequest request) throws Exception {
-        Resource resource = attachmentService.download(id);
+    public ResponseEntity<Resource> download(@RequestParam("problemId") UUID problemId, HttpServletRequest request) throws Exception {
+        Problem problem = this.problemService.findById(problemId).orElseThrow(
+                () -> new ResouceNotFoundException("Problem not found" + problemId));
+        Attachment attachment = this.attachmentService.download(problem).orElseThrow(
+                () -> new ResouceNotFoundException("attachment not found"));
+        Resource resource = this.storageService.get(attachment);
         String contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
